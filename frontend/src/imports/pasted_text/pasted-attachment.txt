@@ -1,0 +1,255 @@
+📘 1. Âmbito do Sistema
+
+Sistema web para:
+
+Gestão de ferramentas (tools)
+
+Gestão do ciclo de vida técnico
+
+Gestão de projetos (criação/alteração)
+
+Gestão de manutenção/intervenções
+
+Controlo de custos, tempos e materiais
+
+Gestão de documentação técnica versionada
+
+Integração com ERP (clientes, utilizadores, fichas técnicas)
+
+🧩 2. Domínios Funcionais
+🔵 2.1 Gestão de Ferramentas (TOOL)
+RF-001 – Criar ferramenta
+
+O sistema deve permitir:
+
+Criar uma TOOL com:
+
+código único
+
+descrição
+
+nº série
+
+tipo
+
+data fabrico
+
+RF-002 – Ativar / Desativar ferramenta
+
+Campo active
+
+Não apagar fisicamente (soft delete)
+
+🟣 2.2 Propriedade da Ferramenta
+RF-010 – Associar ferramenta a cliente
+
+Criar registo em TOOL_OWNERSHIP_HISTORY
+
+RF-011 – Histórico de propriedade
+
+Manter histórico com:
+
+start_date
+
+end_date
+
+Regra:
+
+❗ Não pode haver períodos sobrepostos para a mesma TOOL
+
+🟢 2.3 Gestão de Projetos
+RF-020 – Criar projeto
+
+Código único
+
+Datas planeadas vs reais
+
+Estado (planeado, em curso, fechado)
+
+RF-021 – Associar ferramentas ao projeto
+
+Via PROJECT_TOOL
+
+RF-022 – Gestão independente por ferramenta
+
+Cada TOOL dentro do projeto:
+
+Pode ter:
+
+datas diferentes
+
+estado diferente
+
+freeze independente
+
+🧊 2.4 Gestão de Freeze (PROJECT_TOOL)
+RF-030 – Congelar ferramenta no projeto
+
+freeze_flag = true
+
+datas de freeze
+
+RF-031 – Comportamento
+
+TOOL não evolui no projeto enquanto congelada
+
+Pode ter INTERVENTION mesmo em freeze ✅
+
+🧪 2.5 Testes de Ferramenta
+RF-040 – Registar testes
+
+Até N testes (não limitar tecnicamente a 6)
+
+Sequenciais (test_number)
+
+RF-041 – Validação de conclusão
+
+TOOL só fica pronta se:
+
+todos os critérios de aceitação forem OK
+
+🔧 2.6 Intervenções (Manutenção)
+RF-050 – Criar intervenção
+
+Associada a TOOL
+
+Estados:
+
+Aberta
+
+Em execução
+
+Concluída
+
+RF-051 – Regra crítica
+
+❗ Apenas 1 intervenção aberta por TOOL
+
+⚙️ 2.7 Recursos da Intervenção
+RF-060 – Registar horas
+
+Múltiplos registos por intervenção
+
+Tipos via INTERVENTION_RESOURCE_TYPE
+
+Ex:
+
+MO
+
+CNC
+
+EDM
+
+RF-061 – Flexibilidade
+
+Permitir múltiplas linhas do mesmo tipo
+
+🧱 2.8 Materiais de Intervenção
+RF-070 – Registar materiais
+
+Tipo:
+
+RAW_MATERIAL
+
+ACCESSORY
+
+RF-071 – Custos associados
+
+Quantidade
+
+Custo unitário
+
+💰 2.9 Custos
+RF-080 – Registar custos detalhados
+
+Via INTERVENTION_COST_ITEM
+
+RF-081 – Cálculo
+
+Sistema deve permitir:
+
+custo total por intervenção
+
+custo total por projeto
+
+custo por ferramenta
+
+⚠️ 2.10 Problemas / Diagnóstico
+RF-090 – Classificar problemas
+
+Múltiplos problemas por intervenção
+
+RF-091 – Tipificação
+
+Via PROBLEM_TYPE
+
+📄 2.11 Documentação Técnica
+RF-100 – Criar documentos
+
+Associados a:
+
+TOOL
+
+PROJECT
+
+INTERVENTION
+
+RF-101 – Versionamento
+
+revision_number
+
+RF-102 – Aprovação
+
+approved_by
+
+approval_date
+
+🏭 2.12 Produtos (Lifecycle)
+RF-110 – Associar produtos à ferramenta
+
+TOOL_PRODUCT_LIFECYCLE
+
+RF-111 – Histórico
+
+Uma TOOL pode:
+
+produzir vários produtos ao longo do tempo
+
+simultaneamente
+
+🔗 3. Regras de Negócio Críticas
+RB-001
+
+Uma TOOL:
+
+pode ter vários PROJECTS
+
+pode ter várias INTERVENTIONS
+
+pode ter vários PRODUCTS ao longo do tempo
+
+RB-002
+
+PROJECT_TOOL:
+
+é a entidade central de execução
+
+RB-003
+
+INTERVENTION:
+
+não bloqueia PROJECT
+
+pode ocorrer em paralelo
+
+RB-004
+
+TOOL_OWNERSHIP_HISTORY:
+
+sem sobreposição de datas
+
+RB-005
+
+INTERVENTION_RESOURCE:
+
+permite múltiplos registos por tipo

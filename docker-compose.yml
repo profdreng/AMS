@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # -----------------------------------------------------------------------------
+  # APMS Services
+  # -----------------------------------------------------------------------------
+  apms-db:
+    image: postgres:15
+    container_name: apms-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: apms
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql  # Auto-initialize DB with schema
+
+  apms-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: apms-backend
+    ports:
+      - "8001:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgrespassword@apms-db:5432/apms
+      - OPENPROJECT_URL=http://openproject-web:8080
+      - OPENPROJECT_API_KEY=your_api_key_here
+      - SAGEX3_URL=https://your-sagex3-instance.com/soap
+      - SAGEX3_USER=admin
+      - SAGEX3_PASS=admin_pass
+      - QMS_URL=https://your-qms-instance.com/api
+      - QMS_TOKEN=qms_token_here
+    depends_on:
+      - apms-db
+    restart: unless-stopped
+
+  apms-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: apms-frontend
+    ports:
+      - "8502:8501"
+    environment:
+      - BACKEND_API_URL=http://apms-backend:8000
+    depends_on:
+      - apms-backend
+    restart: unless-stopped
+
+  # -----------------------------------------------------------------------------
+  # OpenProject Services
+  # -----------------------------------------------------------------------------
+  op-db:
+    image: postgres:13
+    container_name: openproject-db
+    environment:
+      POSTGRES_USER: openproject
+      POSTGRES_PASSWORD: openprojectpassword
+      POSTGRES_DB: openproject
+    volumes:
+      - op_pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  openproject-web:
+    image: openproject/openproject:14
+    container_name: openproject-web
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgresql://openproject:openprojectpassword@op-db:5432/openproject
+      - SECRET_KEY_BASE=supersecretkey_apms_integration_12345
+      - OPENPROJECT_HOST__NAME=localhost:8080
+      - OPENPROJECT_HTTPS=false
+    depends_on:
+      - op-db
+    volumes:
+      - op_pgdata:/var/openproject/pgdata
+      - op_assets:/var/openproject/assets
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  op_pgdata:
+  op_assets:
