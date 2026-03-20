@@ -50,6 +50,22 @@ services:
       - apms-backend
     restart: unless-stopped
 
+  apms-frontend-react:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.react
+    container_name: apms-frontend-react
+    ports:
+      - "8503:5173"
+    environment:
+      - VITE_BACKEND_API_URL=http://localhost:8001
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - apms-backend
+    restart: unless-stopped
+
   # -----------------------------------------------------------------------------
   # OpenProject Services
   # -----------------------------------------------------------------------------
