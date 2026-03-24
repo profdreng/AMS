@@ -7,7 +7,14 @@ const resolveBackendUrl = (url: string) => {
   return url;
 };
 
-const BACKEND_URL = resolveBackendUrl(import.meta.env.VITE_BACKEND_API_URL || "http://localhost:8001");
+// Use environment variable or default to 192.168.0.71:8001
+const DEFAULT_BACKEND = "http://192.168.0.71:8001";
+const ENV_BACKEND = import.meta.env.VITE_BACKEND_API_URL;
+
+console.log("[APIClient] VITE_BACKEND_API_URL:", ENV_BACKEND);
+console.log("[APIClient] Using backend:", ENV_BACKEND || DEFAULT_BACKEND);
+
+const BACKEND_URL = resolveBackendUrl(ENV_BACKEND || DEFAULT_BACKEND);
 
 export class APIClient {
   /**
@@ -58,6 +65,35 @@ export class APIClient {
     } catch (error) {
       console.error(`Error sending data to backend (${endpoint}):`, error);
       return null;
+    }
+  }
+
+  static async put<T>(endpoint: string, data: any): Promise<T | null> {
+    try {
+      console.log(`[PUT] ${BACKEND_URL}/${endpoint}`, data);
+      
+      const response = await fetch(`${BACKEND_URL}/${endpoint.replace(/^\//, "")}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      console.log(`[PUT Response] Status: ${response.status}`, response);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[PUT Error] ${response.status}: ${errorText}`);
+        throw new Error(`HTTP ${response.status}: ${errorText || response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log(`[PUT Success]`, result);
+      return result;
+    } catch (error) {
+      console.error(`[PUT Failed] Error updating data on backend (${endpoint}):`, error);
+      throw error; // Propaga o erro para o chamador
     }
   }
 }

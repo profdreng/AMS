@@ -25,6 +25,7 @@ class ToolBase(BaseModel):
     description: Optional[str] = None
     serial_number: Optional[str] = None
     manufacture_date: Optional[date] = None
+    technical_document: Optional[str] = None
     active: bool = True
 
 class ToolCreate(ToolBase):

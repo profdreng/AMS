@@ -5,6 +5,7 @@ export interface Tool {
   description?: string;
   serial_number?: string;
   manufacture_date?: string;
+  technical_document?: string;
   active: boolean;
   created_at: string;
   tool_type?: ToolType;

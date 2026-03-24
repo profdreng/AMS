@@ -1,0 +1,248 @@
+<!-- 
+Teste completo para debugar a API
+Salve este ficheiro e abra no browser: file:///c:/project/APMS/frontend/test-api-put.html
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste API - Debugar PUT</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #333; margin-bottom: 20px; }
+        .section { margin: 20px 0; padding: 15px; border-left: 4px solid #0066cc; background: #f9f9f9; }
+        .section h2 { font-size: 16px; color: #0066cc; margin-bottom: 10px; }
+        input, select, button { padding: 8px 12px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        button { background: #0066cc; color: white; cursor: pointer; border: none; }
+        button:hover { background: #0052a3; }
+        button.secondary { background: #666; }
+        button.secondary:hover { background: #555; }
+        .log { background: #1e1e1e; color: #00ff00; padding: 15px; border-radius: 4px; font-family: 'Courier New'; font-size: 12px; max-height: 400px; overflow-y: auto; margin-top: 10px; }
+        .log-success { color: #00ff00; }
+        .log-error { color: #ff4444; }
+        .log-info { color: #aaaaaa; }
+        .log-warn { color: #ffaa00; }
+        .tools-list { margin-top: 10px; }
+        .tool-item { background: white; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; }
+        .tool-item.selected { background: #e3f2fd; border-color: #0066cc; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Teste API - Debugar PUT Tools</h1>
+        
+        <div class="section">
+            <h2>1️⃣ Configuração</h2>
+            <label>Backend URL:</label><br>
+            <input type="text" id="backendUrl" value="http://192.168.0.71:8001" style="width: 300px;">
+        </div>
+        
+        <div class="section">
+            <h2>2️⃣ Listar Ferramentas</h2>
+            <button onclick="listarFerramentas()">📋 GET /tools/ - Listar todas</button>
+            <div class="tools-list" id="toolsList"></div>
+        </div>
+        
+        <div class="section">
+            <h2>3️⃣ Editar Ferramenta</h2>
+            <label>ID da Ferramenta:</label><br>
+            <input type="number" id="toolId" value="1" style="width: 100px;">
+            <button onclick="obterFerramenta()">📖 GET - Obter Dados Atuais</button>
+            <button onclick="testarPUT()" style="background: #ff9900;">🔄 PUT - Guardar</button>
+            <div id="formulario" style="margin-top: 15px;"></div>
+        </div>
+        
+        <div class="section">
+            <h2>📊 Log Detalhado</h2>
+            <button onclick="limparLog()" class="secondary">Limpar</button>
+            <div class="log" id="log"></div>
+        </div>
+    </div>
+    
+    <script>
+        function getBackendUrl() {
+            return document.getElementById("backendUrl").value;
+        }
+        
+        function log(msg, tipo = "info") {
+            const logDiv = document.getElementById("log");
+            const timestamp = new Date().toLocaleTimeString();
+            let classe = "log-info";
+            let emoji = "ℹ";
+            
+            if (tipo === "error") { classe = "log-error"; emoji = "❌"; }
+            else if (tipo === "success") { classe = "log-success"; emoji = "✅"; }
+            else if (tipo === "warn") { classe = "log-warn"; emoji = "⚠"; }
+            
+            logDiv.innerHTML += `<span class="${classe}">[${timestamp}] ${emoji} ${msg}</span>\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function limparLog() {
+            document.getElementById("log").innerHTML = "";
+        }
+        
+        async function listarFerramentas() {
+            const url = getBackendUrl();
+            log(`🔍 GET ${url}/tools/`, "info");
+            
+            try {
+                const resp = await fetch(`${url}/tools/`);
+                log(`Status HTTP: ${resp.status} ${resp.statusText}`);
+                
+                if (!resp.ok) {
+                    log(`Erro HTTP!`, "error");
+                    return;
+                }
+                
+                const ferramentas = await resp.json();
+                log(`✓ Retornou ${ferramentas.length} ferramentas`, "success");
+                
+                // Mostrar lista de ferramentas
+                const listDiv = document.getElementById("toolsList");
+                listDiv.innerHTML = "";
+                
+                ferramentas.forEach(f => {
+                    const item = document.createElement("div");
+                    item.className = "tool-item";
+                    item.onclick = () => {
+                        document.getElementById("toolId").value = f.id;
+                        document.querySelectorAll(".tool-item").forEach(el => el.classList.remove("selected"));
+                        item.classList.add("selected");
+                        obterFerramenta();
+                    };
+                    item.innerHTML = `
+                        <strong>ID ${f.id}:</strong> ${f.code} - ${f.description || "Sem descrição"}
+                        <br><small>Série: ${f.serial_number || "N/A"} | Estado: ${f.active ? "Ativa" : "Inativa"}</small>
+                    `;
+                    listDiv.appendChild(item);
+                });
+                
+                log(JSON.stringify(ferramentas, null, 2));
+            } catch (err) {
+                log(`Erro de rede: ${err.message}`, "error");
+                log(err.stack, "error");
+            }
+        }
+        
+        async function obterFerramenta() {
+            const url = getBackendUrl();
+            const toolId = document.getElementById("toolId").value;
+            
+            log(`📖 GET ${url}/tools/${toolId}`, "info");
+            
+            try {
+                const resp = await fetch(`${url}/tools/${toolId}`);
+                log(`Status HTTP: ${resp.status} ${resp.statusText}`);
+                
+                if (!resp.ok) {
+                    const error = await resp.text();
+                    log(`Erro: ${error}`, "error");
+                    return;
+                }
+                
+                const ferramenta = await resp.json();
+                log(`✓ Ferramenta obtida!`, "success");
+                log(JSON.stringify(ferramenta, null, 2));
+                
+                // Preencher formulário
+                renderForm(ferramenta);
+            } catch (err) {
+                log(`Erro de rede: ${err.message}`, "error");
+            }
+        }
+        
+        function renderForm(ferramenta) {
+            const formulario = document.getElementById("formulario");
+            formulario.innerHTML = `
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td><label>ID:</label></td>
+                        <td><input type="number" id="f_id" value="${ferramenta.id}" readonly style="background: #f0f0f0;"></td>
+                    </tr>
+                    <tr>
+                        <td><label>Código:</label></td>
+                        <td><input type="text" id="f_code" value="${ferramenta.code}"></td>
+                    </tr>
+                    <tr>
+                        <td><label>Descrição:</label></td>
+                        <td><input type="text" id="f_description" value="${ferramenta.description || ''}"></td>
+                    </tr>
+                    <tr>
+                        <td><label>Nº Série:</label></td>
+                        <td><input type="text" id="f_serial" value="${ferramenta.serial_number || ''}"></td>
+                    </tr>
+                    <tr>
+                        <td><label>Tipo ID:</label></td>
+                        <td><input type="number" id="f_type" value="${ferramenta.tool_type_id}"></td>
+                    </tr>
+                    <tr>
+                        <td><label>Data de Fabrico:</label></td>
+                        <td><input type="date" id="f_date" value="${ferramenta.manufacture_date || ''}"></td>
+                    </tr>
+                    <tr>
+                        <td><label>Documento Técnico:</label></td>
+                        <td><input type="text" id="f_doc" value="${ferramenta.technical_document || ''}"></td>
+                    </tr>
+                    <tr>
+                        <td><label>Ativo:</label></td>
+                        <td><input type="checkbox" id="f_active" ${ferramenta.active ? 'checked' : ''}></td>
+                    </tr>
+                </table>
+            `;
+        }
+        
+        async function testarPUT() {
+            const url = getBackendUrl();
+            const toolId = document.getElementById("toolId").value;
+            
+            log(`🔄 PUT ${url}/tools/${toolId}`, "info");
+            
+            const dados = {
+                tool_type_id: parseInt(document.getElementById("f_type").value),
+                code: document.getElementById("f_code").value,
+                description: document.getElementById("f_description").value,
+                serial_number: document.getElementById("f_serial").value,
+                manufacture_date: document.getElementById("f_date").value || null,
+                technical_document: document.getElementById("f_doc").value || null,
+                active: document.getElementById("f_active").checked
+            };
+            
+            log(`Enviando dados: ${JSON.stringify(dados)}`);
+            
+            try {
+                const resp = await fetch(`${url}/tools/${toolId}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(dados)
+                });
+                
+                log(`Status HTTP: ${resp.status} ${resp.statusText}`);
+                
+                if (!resp.ok) {
+                    const error = await resp.text();
+                    log(`✗ Erro HTTP ${resp.status}!`, "error");
+                    log(`Resposta: ${error}`, "error");
+                    return;
+                }
+                
+                const resultado = await resp.json();
+                log(`✓ Guardado com sucesso!`, "success");
+                log(JSON.stringify(resultado, null, 2), "success");
+                
+            } catch (err) {
+                log(`❌ Erro de rede: ${err.message}`, "error");
+                log(err.stack, "error");
+            }
+        }
+        
+        // Auto-conectar ao carregar
+        window.onload = () => {
+            log("🚀 Página carregada. Clique em 'Listar todas' para começar.", "info");
+        };
+    </script>
+</body>
+</html>

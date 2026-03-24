@@ -59,6 +59,49 @@ def create_tool(tool: schemas.ToolCreate, db: Session = Depends(get_db)):
     db.refresh(db_tool)
     return db_tool
 
+@app.get("/tools/{tool_id}", response_model=schemas.Tool)
+def read_tool(tool_id: int, db: Session = Depends(get_db)):
+    """Obtém os detalhes de uma ferramenta específica."""
+    tool = db.query(models.Tool).filter(models.Tool.id == tool_id).first()
+    if not tool:
+        raise HTTPException(status_code=404, detail="Ferramenta não encontrada")
+    return tool
+
+@app.put("/tools/{tool_id}", response_model=schemas.Tool)
+def update_tool(tool_id: int, tool: schemas.ToolCreate, db: Session = Depends(get_db)):
+    """Atualiza os dados de uma ferramenta existente."""
+    db_tool = db.query(models.Tool).filter(models.Tool.id == tool_id).first()
+    if not db_tool:
+        raise HTTPException(status_code=404, detail="Ferramenta não encontrada")
+    
+    # Atualiza os campos
+    for key, value in tool.model_dump().items():
+        setattr(db_tool, key, value)
+    
+    db.commit()
+    db.refresh(db_tool)
+    return db_tool
+
+@app.delete("/tools/{tool_id}")
+def delete_tool(tool_id: int, db: Session = Depends(get_db)):
+    """Elimina uma ferramenta se não existir ligações."""
+    db_tool = db.query(models.Tool).filter(models.Tool.id == tool_id).first()
+    if not db_tool:
+        raise HTTPException(status_code=404, detail="Ferramenta não encontrada")
+    
+    # Verifica se existem intervenções associadas
+    intervention_count = db.query(models.Intervention).filter(
+        models.Intervention.tool_id == tool_id
+    ).count()
+    
+    if intervention_count > 0:
+        raise HTTPException(status_code=409, detail=f"Não é possível eliminar. Existem {intervention_count} intervenção(ões) associada(s).")
+    
+    # Se não houver ligações, elimina
+    db.delete(db_tool)
+    db.commit()
+    return {"status": "success", "message": "Ferramenta eliminada com sucesso"}
+
 @app.post("/tools/{tool_id}/documents/")
 def add_tool_document(tool_id: int, file_path: str, db: Session = Depends(get_db)):
     """Associa um caminho de ficheiro documental a uma ferramenta."""

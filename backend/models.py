@@ -44,6 +44,7 @@ class Tool(Base):
     description = Column(Text)
     serial_number = Column(String(100), unique=True)
     manufacture_date = Column(Date)
+    technical_document = Column(String(500))  # Caminho para documento técnico
     created_at = Column(TIMESTAMP, server_default=func.now())
     created_by = Column(String(100))
     active = Column(Boolean, default=True)
