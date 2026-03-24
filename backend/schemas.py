@@ -2,6 +2,20 @@ from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import date, datetime
 
+# --- Esquemas para Tipos de Ferramenta (Tool Types) ---
+
+class ToolTypeBase(BaseModel):
+    code: str
+    description: Optional[str] = None
+
+class ToolTypeCreate(ToolTypeBase):
+    pass
+
+class ToolType(ToolTypeBase):
+    id: int
+    model_config = ConfigDict(from_attributes=True)
+
+
 # --- Esquemas para Ferramentas (Tools) ---
 
 class ToolBase(BaseModel):
@@ -22,6 +36,7 @@ class Tool(ToolBase):
     id: int
     created_at: datetime
     created_by: Optional[str] = None
+    tool_type: Optional[ToolType] = None
 
     # Permite ao Pydantic ler os dados diretamente de modelos SQLAlchemy (ORM)
     model_config = ConfigDict(from_attributes=True)

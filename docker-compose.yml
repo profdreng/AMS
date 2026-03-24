@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # -----------------------------------------------------------------------------
   # APMS Services
@@ -15,7 +13,7 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql  # Auto-initialize DB with schema
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql # Auto-initialize DB with schema
 
   apms-backend:
     build:
@@ -33,6 +31,8 @@ services:
       - SAGEX3_PASS=admin_pass
       - QMS_URL=https://your-qms-instance.com/api
       - QMS_TOKEN=qms_token_here
+    volumes:
+      - .:/app
     depends_on:
       - apms-db
     restart: unless-stopped

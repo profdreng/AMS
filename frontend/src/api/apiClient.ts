@@ -1,4 +1,13 @@
-const BACKEND_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:8000";
+const resolveBackendUrl = (url: string) => {
+  // If we are accessing from another machine (not localhost), 
+  // but the API is set to localhost, we swap it for the current machine's IP/hostname.
+  if (url.includes("localhost") && typeof window !== "undefined" && window.location.hostname !== "localhost") {
+    return url.replace("localhost", window.location.hostname);
+  }
+  return url;
+};
+
+const BACKEND_URL = resolveBackendUrl(import.meta.env.VITE_BACKEND_API_URL || "http://localhost:8001");
 
 export class APIClient {
   /**

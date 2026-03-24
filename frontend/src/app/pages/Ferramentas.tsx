@@ -12,6 +12,7 @@ import { Tool } from "../../api/types";
 export function Ferramentas() {
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [tools, setTools] = useState<Tool[]>([]);
+  const [toolTypes, setToolTypes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Form State
@@ -19,8 +20,9 @@ export function Ferramentas() {
     code: "",
     serial_number: "",
     description: "",
-    tool_type_id: 1, // Default to 1
+    tool_type_id: 0,
     manufacture_date: "",
+    technical_document: "", // Placeholder for doc path
     active: true,
   });
 
@@ -30,8 +32,12 @@ export function Ferramentas() {
 
   const fetchTools = async () => {
     setLoading(true);
-    const data = await apiClient.get<Tool[]>("tools/");
-    if (data) setTools(data);
+    const [toolsData, typesData] = await Promise.all([
+      apiClient.get<Tool[]>("tools/"),
+      apiClient.get<any[]>("tool-types/"),
+    ]);
+    if (toolsData) setTools(toolsData);
+    if (typesData) setToolTypes(typesData);
     setLoading(false);
   };
 
@@ -47,8 +53,9 @@ export function Ferramentas() {
         code: "",
         serial_number: "",
         description: "",
-        tool_type_id: 1,
+        tool_type_id: 0,
         manufacture_date: "",
+        technical_document: "",
         active: true,
       });
     }
@@ -135,11 +142,9 @@ export function Ferramentas() {
                       <SelectValue placeholder="Selecione o tipo" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">Molde</SelectItem>
-                      <SelectItem value="2">Matriz</SelectItem>
-                      <SelectItem value="3">Punção</SelectItem>
-                      <SelectItem value="4">EDM</SelectItem>
-                      <SelectItem value="5">CNC</SelectItem>
+                      {toolTypes.map((t) => (
+                        <SelectItem key={t.id} value={t.id.toString()}>{t.description || t.code}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -150,6 +155,15 @@ export function Ferramentas() {
                     type="date" 
                     value={newTool.manufacture_date}
                     onChange={(e) => setNewTool({ ...newTool, manufacture_date: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2 col-span-2">
+                  <Label htmlFor="doc">Caminho Documento Técnico</Label>
+                  <Input 
+                    id="doc" 
+                    placeholder="Ex: /docs/tecnicos/molde_v1.pdf" 
+                    value={newTool.technical_document}
+                    onChange={(e) => setNewTool({ ...newTool, technical_document: e.target.value })}
                   />
                 </div>
               </div>
@@ -182,6 +196,9 @@ export function Ferramentas() {
                   Descrição
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                  Tipo
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                   Nº Série
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
@@ -200,6 +217,11 @@ export function Ferramentas() {
                   </td>
                   <td className="px-6 py-4 text-sm font-medium text-slate-900">
                     {tool.description}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                    <Badge variant="outline" className="bg-slate-50">
+                      {tool.tool_type?.description || tool.tool_type?.code || "N/A"}
+                    </Badge>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
                     {tool.serial_number}

@@ -33,6 +33,14 @@ def read_root():
     """Endpoint básico para validar se a API está online."""
     return {"message": "Bem-vindo à API do APMS"}
 
+# --- Endpoints para Tipos de Ferramenta (Tool Types) ---
+
+@app.get("/tool-types/", response_model=List[schemas.ToolType])
+def read_tool_types(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    """Lista todos os tipos de ferramenta (Molde, Cunho, etc)."""
+    return db.query(models.ToolType).offset(skip).limit(limit).all()
+
+
 # --- Endpoints para Ferramentas (Tools) ---
 
 @app.get("/tools/", response_model=List[schemas.Tool])
@@ -50,6 +58,21 @@ def create_tool(tool: schemas.ToolCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_tool)
     return db_tool
+
+@app.post("/tools/{tool_id}/documents/")
+def add_tool_document(tool_id: int, file_path: str, db: Session = Depends(get_db)):
+    """Associa um caminho de ficheiro documental a uma ferramenta."""
+    # 1. Criar o documento técnico (simplificado)
+    db_doc = models.TechnicalDocument(file_path=file_path, status="Ativo")
+    db.add(db_doc)
+    db.commit()
+    db.refresh(db_doc)
+    
+    # 2. Criar a associação na tabela de junção
+    assoc = models.TechnicalDocumentTool(technical_document_id=db_doc.id, tool_id=tool_id)
+    db.add(assoc)
+    db.commit()
+    return {"status": "success", "document_id": db_doc.id}
 
 # --- Endpoints para Intervenções (Interventions) ---
 

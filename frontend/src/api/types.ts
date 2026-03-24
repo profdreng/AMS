@@ -7,6 +7,7 @@ export interface Tool {
   manufacture_date?: string;
   active: boolean;
   created_at: string;
+  tool_type?: ToolType;
 }
 
 export interface Intervention {
@@ -21,6 +22,12 @@ export interface Intervention {
   status?: string;
   opened_at: string;
   created_at: string;
+}
+
+export interface ToolType {
+  id: number;
+  code: string;
+  description?: string;
 }
 
 export interface Project {
