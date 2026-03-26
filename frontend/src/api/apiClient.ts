@@ -1,20 +1,22 @@
-const resolveBackendUrl = (url: string) => {
-  // If we are accessing from another machine (not localhost), 
-  // but the API is set to localhost, we swap it for the current machine's IP/hostname.
-  if (url.includes("localhost") && typeof window !== "undefined" && window.location.hostname !== "localhost") {
-    return url.replace("localhost", window.location.hostname);
+// Resolve the backend URL dynamically based on the browser's current hostname.
+// This ensures the API works whether accessed from localhost, 192.168.0.71, or any other device.
+const resolveBackendUrl = (): string => {
+  const BACKEND_PORT = "8001";
+
+  if (typeof window !== "undefined") {
+    // Always use the same hostname the browser is using, but on port 8001
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    return `${protocol}//${hostname}:${BACKEND_PORT}`;
   }
-  return url;
+
+  // Fallback for SSR or non-browser environments
+  const envUrl = import.meta.env.VITE_BACKEND_API_URL;
+  return envUrl || "http://192.168.0.71:8001";
 };
 
-// Use environment variable or default to 192.168.0.71:8001
-const DEFAULT_BACKEND = "http://192.168.0.71:8001";
-const ENV_BACKEND = import.meta.env.VITE_BACKEND_API_URL;
-
-console.log("[APIClient] VITE_BACKEND_API_URL:", ENV_BACKEND);
-console.log("[APIClient] Using backend:", ENV_BACKEND || DEFAULT_BACKEND);
-
-const BACKEND_URL = resolveBackendUrl(ENV_BACKEND || DEFAULT_BACKEND);
+const BACKEND_URL = resolveBackendUrl();
+console.log("[APIClient] Using backend:", BACKEND_URL);
 
 export class APIClient {
   /**
@@ -95,6 +97,16 @@ export class APIClient {
       console.error(`[PUT Failed] Error updating data on backend (${endpoint}):`, error);
       throw error; // Propaga o erro para o chamador
     }
+  }
+
+  static async delete(endpoint: string): Promise<Response> {
+    const response = await fetch(`${BACKEND_URL}/${endpoint.replace(/^\//, "")}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    return response;
   }
 }
 

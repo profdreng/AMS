@@ -176,10 +176,8 @@ export function Ferramentas() {
     }
 
     try {
-      // Tenta eliminar
-      const response = await fetch(`http://192.168.0.71:8001/tools/${tool.id}`, {
-        method: 'DELETE',
-      });
+      // Tenta eliminar usando o apiClient centralizado
+      const response = await apiClient.delete(`tools/${tool.id}`);
 
       if (response.status === 404) {
         alert("✗ Ferramenta não encontrada!");
@@ -201,7 +199,7 @@ export function Ferramentas() {
   const getFilteredTools = () => {
     return tools.filter(tool => {
       if (filters.code && !tool.code.toLowerCase().includes(filters.code.toLowerCase())) return false;
-      if (filters.description && !tool.description.toLowerCase().includes(filters.description.toLowerCase())) return false;
+      if (filters.description && !tool.description?.toLowerCase().includes(filters.description.toLowerCase())) return false;
       if (filters.tool_type_id && tool.tool_type_id.toString() !== filters.tool_type_id) return false;
       if (filters.active !== "" && tool.active.toString() !== filters.active) return false;
       return true;
