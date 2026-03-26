@@ -6,7 +6,7 @@ from typing import Optional, List, Dict, Any
 # Esta variável define o URL base para as chamadas à API do Backend.
 # No Docker, o backend é acessível através do nome do serviço 'backend' na porta 8000.
 # O valor por defeito é configurado no docker-compose.yml.
-BACKEND_URL = os.getenv("BACKEND_API_URL", "http://backend:8000").rstrip("/")
+BACKEND_URL = os.getenv("BACKEND_API_URL", "http://192.168.0.71:8001").rstrip("/")
 
 class APIClient:
     """
